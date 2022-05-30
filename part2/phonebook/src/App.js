@@ -29,19 +29,27 @@ const App = () => {
       if(window.confirm(`${newPerson.name} already exists. Update?`)) {
         const existingPerson = persons.find(person => person.name.toLowerCase() === newPerson.name.toLowerCase());
         personService.update(existingPerson.id, newPerson)
-          .then(showNotification(`${newPerson.name} updated`))
-          .catch(() => {
+          .then(savedPerson => {
+            setPersons(persons.map(p => p.id !== savedPerson.id ? p : savedPerson))
+            showNotification(`${savedPerson.name} updated`)
+          })
+          .catch((error) => {
+            console.log(error)
             showNotification(`${newPerson.name} not present in phonebook`)
           })
-        setPersons(persons.map(p => p.id !== newPerson.id ? p : newPerson))
-        console.log(persons)
       } else {
         return
       }
     } else {
       personService.create(newPerson)
-        .then(showNotification(`Created ${newPerson.name}`))
-      setPersons(persons.concat([newPerson]))
+        .then(savedPerson => {
+          setPersons(persons.concat([savedPerson]))
+          showNotification(`Created ${savedPerson.name}`)
+        })
+        .catch(error => {
+          console.log(error.response.data)
+          showNotification(error.response.data.error)
+        })
     }
   }
 
