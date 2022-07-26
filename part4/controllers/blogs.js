@@ -24,19 +24,20 @@ blogsRouter.post('/', async (request, response) => {
   if (!decodedToken.id) {
     return response.status(401).json({error: 'token invalid or missing'})
   }
+
   const user = await User.findById(decodedToken.id)
 
   if (!newBlog.title || !newBlog.author) {
     response.status(400).end()
   } else {
-    console.log(user)
-    console.log(user.blogs)
-    const blog = new Blog({...newBlog, user: user.id})
-    blog.likes = newBlog.likes || 0
-    const savedBlog = await blog.save() //user: user._id curently missing, test see if works
-    user.blogs = user.blogs.concat(savedBlog._id)
-    await user.save()
-    response.status(201).json(savedBlog)
+      const blog = new Blog({...newBlog, user: user._id})
+      blog.likes = newBlog.likes || 0
+      const savedBlog = await blog.save()
+      const populatedBlog = await savedBlog.populate('user', { username: 1, name: 1, id: 1 });
+      user.blogs = user.blogs.concat(savedBlog._id)
+      await user.save()
+
+      response.status(201).json(savedBlog)
   }
 })
 
